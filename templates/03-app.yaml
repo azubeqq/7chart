@@ -1,0 +1,78 @@
+# templates/app-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guestbook-app
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: guestbook
+  template:
+    metadata:
+      labels:
+        app: guestbook
+    spec:
+      initContainers:
+      - name: wait-db
+        image: busybox
+        command: ['sh', '-c', 'until nc -z service-postgres 5432; do sleep 2; done']
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: guestbook
+              topologyKey: kubernetes.io/hostname
+
+      containers:
+      - name: guestbook
+        image: azubeq/app-guestbook:{{ .Values.appVersion }}
+        ports:
+        - containerPort: 5000
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory | quote }}
+            cpu: {{ .Values.resources.requests.cpu | quote }}
+          limits:
+            memory: {{ .Values.resources.limits.memory | quote }}
+            cpu: {{ .Values.resources.limits.cpu | quote }}
+        env:
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password-encoded
+        envFrom:
+        - configMapRef:
+            name: app-config
+        readinessProbe:
+          httpGet:
+            path: /  # Или специальный эндпоинт /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+
+---
+# templates/app-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-guestbook
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: {{ .Values.serviceType }}
+  selector:
+    app: guestbook
+  ports:
+    - port: 80
+      targetPort: 5000

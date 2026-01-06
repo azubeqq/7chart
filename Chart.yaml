@@ -1,0 +1,19 @@
+apiVersion: v2          # версия схемы Helm (v2 = современный Helm 3)
+name: demo-chart        # имя чарта (имя пакета) НЕ имя приложения, НЕ имя релиза
+type: application       # application | library
+version: 0.1.0          # версия ЧАРТА (инфраструктуры)
+appVersion: "1.0.0"    # версия ПРИЛОЖЕНИЯ (инфо)
+
+#dependencies:
+#  - name: kube-prometheus-stack
+#    version: "80.9.2"
+#   repository: "https://prometheus-community.github.io/helm-charts"
+#    alias: prometheus-stack
+
+#  - name: loki
+#    version: "6.49.0"
+#    repository: "https://grafana.github.io/helm-charts"
+
+#  - name: promtail
+#    version: "6.17.1"
+#    repository: "https://grafana.github.io/helm-charts"

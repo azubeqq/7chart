@@ -1,0 +1,55 @@
+# templates/app-networkpolicy1.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-allow-traffic
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    # 1. Разрешаем Guestbook на порт 5432
+    - from:
+        - podSelector:
+            matchLabels:
+              app: guestbook
+      ports:
+        - protocol: TCP
+          port: 5432
+    
+    # 2. Разрешаем Prometheus на порт 9187 (metrics)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus  # или app: prometheus
+      ports:
+        - protocol: TCP
+          port: 9187
+          
+---
+# templates/app-networkpolicy2.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: guestbook-allow-from-ingress
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: guestbook
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 5000

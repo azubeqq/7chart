@@ -1,0 +1,29 @@
+grafana:
+  # Этот раздел говорит Графане: "При старте создай эти подключения"
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki-uid # Уникальный ID, чтобы дашборды не ломались
+      access: proxy
+      # ВАЖНО: адрес сервиса Локи внутри кластера.
+      # Если ставим в namespace 'monitoring', то адрес такой:
+      url: http://loki-gateway.monitoring.svc.cluster.local
+      jsonData:
+        maxLines: 1000
+
+prometheus:
+  prometheusSpec:
+    # 1. Самое важное: разрешаем искать ServiceMonitor во ВСЕХ неймспейсах
+    serviceMonitorNamespaceSelector: {}
+    
+    # 2. Разрешаем искать PodMonitor во ВСЕХ неймспейсах (на будущее)
+    podMonitorNamespaceSelector: {}
+    
+    # 3. Разрешаем искать Rules (алерты) во ВСЕХ неймспейсах
+    ruleNamespaceSelector: {}
+    
+    # 4. (Опционально) Если лейблы release не совпадают, можно отключить проверку лейблов вообще.
+    # Если поставишь false - он будет пылесосить ВСЕ ServiceMonitor-ы, которые найдет.
+    # Я рекомендую пока оставить проверку лейблов, но если не заработает - поставь тут false и пустые скобки {} ниже.
+    # serviceMonitorSelectorNilUsesHelmValues: false
+    # serviceMonitorSelector: {}

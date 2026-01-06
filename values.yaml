@@ -1,0 +1,22 @@
+# Настройки нашего приложения
+appVersion: "v1"
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+serviceType: ClusterIP  #LoadBalancer
+
+#prometheus-stack:
+#  enabled: true
+
+#loki:
+#  enabled: true
+
+#promtail:
+#  enabled: true
+
+#replicaCount: 2

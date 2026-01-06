@@ -1,0 +1,28 @@
+# templates/limit-range.yaml
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-limits
+  namespace: {{ .Release.Namespace }}
+spec:
+  limits:
+    - defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      default:
+        cpu: 300m
+        memory: 512Mi
+      type: Container
+
+---
+# templates/resource-quota.yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: {{ .Release.Namespace }}
+spec:
+  hard:
+    pods: "10"
+    requests.cpu: "2"
+    requests.memory: 2Gi

@@ -1,0 +1,7 @@
+config:
+  clients:
+    - url: http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
+      # Обрати внимание на адрес: 
+      # loki-gateway — имя сервиса (создается чартом локи)
+      # .monitoring — имя неймспейса
+      # .svc.cluster.local — стандартный хвост DNS кубера
