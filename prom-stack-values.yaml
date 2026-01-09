@@ -27,3 +27,34 @@ prometheus:
     # Я рекомендую пока оставить проверку лейблов, но если не заработает - поставь тут false и пустые скобки {} ниже.
     # serviceMonitorSelectorNilUsesHelmValues: false
     # serviceMonitorSelector: {}
+    retention: 6h
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 200m
+      limits:
+        memory: 768Mi
+        cpu: 500m
+
+alertmanager:
+  enabled: false
+
+kubeStateMetrics:
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 20m
+    limits:
+      memory: 128Mi
+      cpu: 100m
+
+nodeExporter:
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 20m
+    limits:
+      memory: 128Mi
+      cpu: 100m

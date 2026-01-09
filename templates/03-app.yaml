@@ -4,14 +4,27 @@ kind: Deployment
 metadata:
   name: guestbook-app
   namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: guestbook
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: "1.0"
+    app.kubernetes.io/component: frontend
 spec:
   selector:
     matchLabels:
       app: guestbook
+      tier: frontend
   template:
     metadata:
       labels:
         app: guestbook
+        tier: frontend
+        app.kubernetes.io/name: guestbook
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/version: "1.0"
+        app.kubernetes.io/component: frontend
+        monitoring: "false"
+        logging: "true"
     spec:
       initContainers:
       - name: wait-db
@@ -45,7 +58,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: postgres-secret
-              key: password-encoded
+              key: POSTGRES_PASSWORD
         envFrom:
         - configMapRef:
             name: app-config
@@ -53,13 +66,13 @@ spec:
           httpGet:
             path: /  # Или специальный эндпоинт /health
             port: 5000
-          initialDelaySeconds: 5
+          initialDelaySeconds: 20
           periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /
             port: 5000
-          initialDelaySeconds: 15
+          initialDelaySeconds: 30
           periodSeconds: 20
 
 ---
@@ -69,10 +82,16 @@ kind: Service
 metadata:
   name: service-guestbook
   namespace: {{ .Release.Namespace }}
+  labels:
+    app: guestbook
+    tier: frontend
+    app.kubernetes.io/name: guestbook
+    app.kubernetes.io/component: frontend    
 spec:
   type: {{ .Values.serviceType }}
-  selector:
+  selector: # find POD's
     app: guestbook
+    tier: frontend
   ports:
     - port: 80
       targetPort: 5000

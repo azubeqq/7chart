@@ -4,16 +4,29 @@ kind: StatefulSet
 metadata:
   name: postgres
   namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/instance: {{ .Release.Names }}
+    app.kubernetes.io/version: "15"
+    app.kubernetes.io/component: database
 spec:
   serviceName: "service-postgres"
   replicas: 1
   selector:
     matchLabels:
       app: postgres
+      tier: database
   template:
     metadata:
       labels:
         app: postgres
+        tier: database
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/instance: {{ .Release.Names }}
+        app.kubernetes.io/version: "15"
+        app.kubernetes.io/component: database
+        monitoring: "true"
+        logging: "true"
     spec:
       containers:
       # --- MAIN CONTAINER ---
@@ -24,7 +37,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: postgres-secret
-              key: password-encoded
+              key: POSTGRES_PASSWORD
         - name: POSTGRES_DB
           valueFrom:
             configMapKeyRef:
@@ -46,7 +59,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: postgres-secret
-              key: password-encoded # Твой ключ в секрете
+              key: POSTGRES_PASSWORD # Твой ключ в секрете
         # 2. Теперь используем эту переменную. 
         # ВАЖНО: Она должна идти ПОСЛЕ объявления SECRET_PASSWORD
         - name: DATA_SOURCE_NAME
@@ -70,9 +83,13 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: svc-postgres # Лейбл для монитора
+    tier: database
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
 spec:
   selector:
     app: postgres
+    tier: database
   ports:
     - name: postgres
       port: 5432
@@ -89,8 +106,9 @@ metadata:
   name: postgres-monitor
   namespace: {{ .Release.Namespace }}       # <--- ОБЯЗАТЕЛЬНО раскомментируй
   labels:
-    # ВАЖНО: Этот лейбл должен совпадать с именем релиза Хелма (prometheus-stack)
-    release: prometheus-stack 
+    release: prometheus-stack  # ВАЖНО: Этот лейбл должен совпадать с именем релиза Хелма (prometheus-stack)
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: monitoring
 spec:
   selector:
     matchLabels:
@@ -100,7 +118,7 @@ spec:
       - {{ .Release.Namespace }}
   endpoints:
   - port: metrics
-    interval: 10s
+    interval: 15s
     # Иногда экспортер требует указать путь, но по умолчанию это /metrics, так что ок.
 
 ---
@@ -121,6 +139,7 @@ metadata:
   name: postgres-pv-local
   labels:
     type: local
+    app: postgres
 spec:
   storageClassName: local-storage # ← то же самое имя "local-storage"
   capacity:

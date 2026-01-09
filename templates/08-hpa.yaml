@@ -4,6 +4,10 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: guestbook-hpa
   namespace: {{ .Release.Namespace }}
+  labels:
+    app: guestbook
+    app.kubernetes.io/name: guestbook
+    app.kubernetes.io/component: frontend
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

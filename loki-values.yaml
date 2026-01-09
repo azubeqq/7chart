@@ -1,6 +1,6 @@
 loki:
-  auth_enabled: false # <--- ВОТ ОНО! Отключаем требование X-Scope-OrgID
-  
+  auth_enabled: false
+
   commonConfig:
     replication_factor: 1
 
@@ -21,14 +21,46 @@ loki:
   compactor:
     working_directory: /var/loki/compactor
 #    shared_store: filesystem
-  
+
+  memcachedChunks:
+    enabled: false
+
+  memcachedFrontend:
+    enabled: false
+
+  memcachedIndexQueries:
+    enabled: false
+
+  memcachedIndexWrites:
+    enabled: false
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 300m
+
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false
+
+gateway:
+  enabled: true
+
+canary:
+  enabled: false
+
 deploymentMode: SingleBinary
 
 singleBinary:
   replicas: 1
   persistence:
     enabled: true
-    size: 5Gi # Выделим 5 гигов под логи
+    size: 1Gi # Выделим 1 гигов под логи
 
 # Отключаем встроенный мониторинг самого локи (пока лишнее)
 monitoring:
@@ -66,3 +98,4 @@ bloomCompactor:
   replicas: 0
 bloomGateway:
   replicas: 0
+

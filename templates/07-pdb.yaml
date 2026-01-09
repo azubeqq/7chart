@@ -4,8 +4,13 @@ kind: PodDisruptionBudget
 metadata:
   name: guestbook-pdb
   namespace: {{ .Release.Namespace }}
+  labels:
+    app: guestbook
+    app.kubernetes.io/name: guestbook
+    app.kubernetes.io/component: frontend    
 spec:
   minAvailable: 1
   selector:
     matchLabels:
       app: guestbook
+      tier: frontend

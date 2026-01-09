@@ -1,48 +1,45 @@
-# templates/app-networkpolicy1.yaml
+# templates/06-network-policies.yaml
+# 1. Разрешаем Frontend -> Database
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: postgres-allow-traffic
+  name: allow-frontend-to-database
   namespace: {{ .Release.Namespace }}
+#  labels:
+#    # ⭐ Рекомендуемые
+#    app.kubernetes.io/name: guestbook-system
+#    app.kubernetes.io/component: network-policy
 spec:
   podSelector:
     matchLabels:
-      app: postgres
+      tier: database  # ← Применяется к database
   policyTypes:
     - Ingress
   ingress:
-    # 1. Разрешаем Guestbook на порт 5432
+    # Разрешить frontend
     - from:
         - podSelector:
             matchLabels:
-              app: guestbook
+              tier: frontend
       ports:
         - protocol: TCP
           port: 5432
-    
-    # 2. Разрешаем Prometheus на порт 9187 (metrics)
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: monitoring
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: prometheus  # или app: prometheus
-      ports:
-        - protocol: TCP
-          port: 9187
-          
+
 ---
-# templates/app-networkpolicy2.yaml
+# 2. Разрешаем Ingress -> Frontend
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: guestbook-allow-from-ingress
+  name: allow-ingress-to-frontend
   namespace: {{ .Release.Namespace }}
+  labels:
+    # ⭐ Рекомендуемые
+    app.kubernetes.io/name: guestbook-system
+    app.kubernetes.io/component: network-policy
 spec:
   podSelector:
     matchLabels:
-      app: guestbook
+      tier: frontend
   policyTypes:
     - Ingress
   ingress:
@@ -53,3 +50,92 @@ spec:
       ports:
         - protocol: TCP
           port: 5000
+
+---
+# 3. Разрешаем Prometheus -> Database (metrics)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring
+  namespace: {{ .Release.Namespace }}
+  labels:
+    # ⭐ Рекомендуемые
+    app.kubernetes.io/name: guestbook-system
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      monitoring: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9187
+
+---
+# 4. Разрешаем ВСЕМ DNS (обязательно!)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: {{ .Release.Namespace }}
+  labels:
+    # ⭐ Рекомендуемые
+    app.kubernetes.io/name: guestbook-system
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector: {}  # ← Ко ВСЕМ подам
+  policyTypes:
+    - Egress
+  egress:
+    # DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: TCP
+          port: 53
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-egress-db
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: frontend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              tier: database
+      ports:
+        - protocol: TCP
+          port: 5432
+

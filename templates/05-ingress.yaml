@@ -4,6 +4,10 @@ kind: Ingress
 metadata:
   name: guestbook-ingress
   namespace: {{ .Release.Namespace }}
+  labels:
+    app: guestbook
+    app.kubernetes.io/name: guestbook
+    app.kubernetes.io/component: ingress    
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
